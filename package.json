@@ -1,0 +1,33 @@
+{
+  "name": "scontact",
+  "description": "Simple telegram feedback bot",
+  "version": "1.0.0",
+  "private": true,
+  "main": "app.js",
+  "type": "commonjs",
+  "license": "CC-BY-NC-ND-4.0",
+  "scripts": {
+    "dev": "node app.js",
+    "start": "cross-env NODE_ENV=production node app.js"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "dotenv": "^10.0.0",
+    "express": "~4.16.1",
+    "morgan": "~1.9.1",
+    "telegraf": "^4.4.2",
+    "telegraf-session-local": "^2.1.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.24.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "localtunnel": "^2.0.2"
+  },
+  "engines": {
+    "node": ">=12.13.0"
+  }
+}

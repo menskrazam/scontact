@@ -1,0 +1,11 @@
+{
+  "apps": [{
+    "name": "scontact",
+    "script": "./app.js",
+    "cwd": ".",
+    "watch": false,
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }]
+}
