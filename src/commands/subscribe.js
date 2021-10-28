@@ -1,14 +1,14 @@
-const { getSubscribersChats, getChatType, getChatId, isAdmin } = require('../utils');
+const { getChatType, getChatId, isAdmin, cachePersist: { subscriberSet, subscribers } } = require('../utils');
 
 async function subscribe (ctx) {
   if (isAdmin(ctx)) {
-    const chats = getSubscribersChats(ctx);
+    const chats = await subscribers();
     const chatType = getChatType(ctx);
     const chatId = getChatId(ctx);
     if (chatId && chatType !== 'private') {
       if (chats.indexOf(chatId) === -1) {
+        await subscriberSet(chatId);
         chats.push(chatId);
-        ctx.subscribersSession = { ...ctx.subscribersSession, chats };
         ctx.reply('Подписано успешно');
       } else {
         ctx.reply('Уже подписано');

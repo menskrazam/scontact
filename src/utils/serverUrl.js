@@ -1,11 +1,10 @@
-const localtunnel = process.env.NODE_ENV !== 'production'
-  ? require('localtunnel') // eslint-disable-line node/no-unpublished-require
-  : undefined;
+const localtunnel = require('localtunnel');
 
-let url = process.env.SERVER_URL.replace(/\/$/, '');
+const SERVER_URL = process.env.SERVER_URL || false;
+let url = SERVER_URL ? SERVER_URL.replace(/\/$/, '') : '';
 
 (async () => {
-  if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'provisioning') {
+  if (process.env.NODE_ENV !== 'production' || !SERVER_URL) {
     const check = 0;
     // eslint-disable-next-line no-unmodified-loop-condition
     while (!localtunnel) {
@@ -18,18 +17,17 @@ let url = process.env.SERVER_URL.replace(/\/$/, '');
       });
     }
     const tunnel = await localtunnel({ port: process.env.PORT });
-    console.log(`Developer mode detected. Localtunnel initialization on ${tunnel.url}`);
+    console.log(`Localtunnel initialization on ${tunnel.url}`);
     url = tunnel.url.replace(/\/$/, '');
-  } else {
-    if (process.env.NODE_ENV === 'production') {
-      console.log(`Production mode detected. Initialization on ${url}`);
-    }
+  }
+  if (process.env.NODE_ENV === 'production' && SERVER_URL) {
+    console.log(`Production mode detected. Initialization on ${url}`);
   }
 })();
 
 async function serverUrl () {
-  const prodUrl = process.env.SERVER_URL.replace(/\/$/, '');
-  if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'provisioning') {
+  const prodUrl = SERVER_URL ? SERVER_URL.replace(/\/$/, '') : '';
+  if (process.env.NODE_ENV === 'production' && SERVER_URL) {
     return prodUrl;
   }
   const check = 0;

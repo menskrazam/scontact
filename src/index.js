@@ -1,13 +1,10 @@
 const { Telegraf } = require('telegraf');
-const LocalSession = require('telegraf-session-local');
 const { v4: uuidv4 } = require('uuid');
 
-const DB = process.env.DB || 'session.json';
+const { serverUrl } = require('./utils');
 const {
-  serverUrl, getSessionKey
-} = require('./utils');
-const {
-  message: reactionMessage
+  message: reactionMessage,
+  editedMessage: reactionEditedMessage
 } = require('./reactions');
 const {
   start: commandStart,
@@ -49,22 +46,15 @@ function botEvents () {
   bot.on('message', async (ctx, next) => {
     return reactionMessage(ctx, next);
   });
+
+  // Get edited message
+  bot.on('edited_message', async (ctx, next) => {
+    return reactionEditedMessage(ctx, next);
+  });
 }
 
 async function botInit () {
   bot = new Telegraf(process.env.TOKEN);
-  const subscribersSession = new LocalSession({
-    database: 'db/subscribersSession.json',
-    property: 'subscribersSession',
-    getSessionKey: () => 'subscribers'
-  })
-  bot.use(subscribersSession.middleware());
-  const chatsSession = new LocalSession({
-    database: 'db/chatsSession.json',
-    property: 'chatsSession',
-    getSessionKey: getSessionKey
-  })
-  bot.use(chatsSession.middleware());
   if (process.env.NODE_ENV !== 'production') {
     bot.use(Telegraf.log());
   }

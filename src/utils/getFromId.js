@@ -1,6 +1,6 @@
 module.exports = ({
   update: {
     message: { from: { id = undefined } = {} } = {},
-    edited_message: { from: { id: edId = 0 } = {} } = {}
-  } = {}
-}) => id || edId;
+    edited_message: { from: { id: eId = 0 } = {} } = {}
+  }
+}) => id || eId;

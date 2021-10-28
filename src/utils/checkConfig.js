@@ -6,15 +6,21 @@ function checkConfig () {
   }
 
   if (!process.env.PORT) {
-    errors.push('PORT for telegram bot must be provided!');
+    console.log('PORT not provided. Use default 80 port.');
   }
 
   if (!process.env.SERVER_URL) {
-    errors.push('SERVER_URL for telegram bot must be provided!');
+    console.log('SERVER_URL not provided. Use localtunnel.');
   }
 
   if (!process.env.ADMIN_ID) {
     errors.push('ADMIN_ID must be provided!');
+  }
+
+  if (process.env.DEFAULT_TTL) {
+    console.log(`Cache TLL set to ${process.env.DEFAULT_TTL}`);
+  } else {
+    console.log(`Cache TLL is unlimited. Use DEFAULT_TTL setting to change it`);
   }
 
   return errors.length === 0

@@ -1,34 +1,62 @@
-const { getChatId, getChatType, getSubscribersChats, getForwardSenderName } = require('../utils');
+const {
+  getChatId, getChatType, getMessageId, isReplyToMessage, getChatKey, getForwardSenderName,
+  cachePersist: {
+    chatStatGet, chatStatSet, chatStatDel, subscribers, setOrUpdate, get
+  }
+} = require('../utils');
 
-async function message (ctx, next) {
-  const chats = getSubscribersChats(ctx);
-  const { chatsSession: { messages = {}, init = false } = {} } = ctx;
-  const chatType = getChatType(ctx);
-
-  if (chatType === 'private') {
-    const { update: { message: { date: messageDate = null } = {} } = {} } = ctx;
-    messages[messageDate] = getChatId(ctx);
-    ctx.chatsSession = { ...ctx.chatsSession, messages };
-    if (!init) {
-      ctx.chatsSession = { ...ctx.chatsSession, init: true };
-      await ctx.reply('Спасибо за ваше сообщение. Это сообщение и все последующие сообщения будут пересылаться нам. При первой же возможности мы ответим.');
-    }
-    for (let i = 0; i < chats.length; i++) {
+async function privateChat (ctx, next) {
+  const chatId = getChatId(ctx);
+  const { init = false } = await chatStatGet(chatId) || {};
+  if (!init) {
+    await chatStatSet(chatId, { init: true });
+    await ctx.reply('Спасибо за ваше сообщение. Это сообщение и все последующие сообщения будут пересылаться нам. При первой же возможности мы ответим.');
+  }
+  const cacheKey = getChatKey(ctx);
+  await setOrUpdate(cacheKey, chatId);
+  const chats = await subscribers();
+  for (let i = 0; i < chats.length; i++) {
+    try {
       await ctx.forwardMessage(chats[i], ctx.from.id, ctx.message.id);
-    }
-  } else {
-    const { update: { message: { reply_to_message: { forward_date = null } = {} } = {} } = {} } = ctx;
-    const forwardSenderName = getForwardSenderName(ctx);
-    if (messages[forward_date]) {
-      await ctx.telegram.copyMessage(messages[forward_date], ctx.message.chat.id, ctx.message.message_id);
-    } else {
-      if (forwardSenderName && forwardSenderName.length > 0) {
-        await ctx.reply(`Не могу связаться с пользователем ${forwardSenderName}`);
-      }
+    } catch (e) {
+      console.error(e);
     }
   }
-
   return next();
 }
 
-module.exports = message;
+async function groupChat (ctx, next) {
+  const replyToMessage = isReplyToMessage(ctx);
+  if (!replyToMessage) {
+    return next();
+  }
+  const chatId = getChatId(ctx);
+  const messageId = getMessageId(ctx);
+  const cacheKey = getChatKey(ctx);
+  const replyToChatId = await get(cacheKey) || 0;
+  if (replyToMessage) {
+    try {
+      await ctx.telegram.copyMessage(replyToChatId, chatId, messageId);
+    } catch (e) {
+      if (typeof e === 'object') {
+        const forwardSenderName = getForwardSenderName(ctx);
+        const { response: { ok = false, error_code: ec = 0 } = { ok: false, error_code: 0 } } = e;
+        if (ec === 403) {
+          if (forwardSenderName && forwardSenderName.length > 0) {
+            await ctx.reply(`Не могу связаться с пользователем ${forwardSenderName}. Он закрыл бот.`);
+            await chatStatDel(replyToChatId);
+          }
+        }
+        if (!ok && ec !== 403) {
+          console.error(e);
+          await ctx.reply(`Неизвестная ошибка отправки пользователю ${forwardSenderName}`);
+        }
+      } else {
+        console.error(e);
+      }
+    }
+  }
+  return next();
+}
+
+module.exports = async (ctx, next) => getChatType(ctx) === 'private' ? privateChat(ctx, next) : groupChat(ctx, next);
