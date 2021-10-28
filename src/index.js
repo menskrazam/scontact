@@ -3,8 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const { serverUrl } = require('./utils');
 const {
-  message: reactionMessage,
-  editedMessage: reactionEditedMessage
+  message: reactionMessage
 } = require('./reactions');
 const {
   start: commandStart,
@@ -45,11 +44,6 @@ function botEvents () {
   // Get message
   bot.on('message', async (ctx, next) => {
     return reactionMessage(ctx, next);
-  });
-
-  // Get edited message
-  bot.on('edited_message', async (ctx, next) => {
-    return reactionEditedMessage(ctx, next);
   });
 }
 
